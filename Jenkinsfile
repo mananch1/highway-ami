@@ -8,9 +8,6 @@ pipeline {
     }
 
     environment {
-        JAVA_HOME = tool name: 'JDK-21', type: 'jdk'
-        MAVEN_HOME = tool name: 'Maven-3.9', type: 'maven'
-        PATH = "${JAVA_HOME}/bin;${MAVEN_HOME}/bin;${env.PATH}"
         APP_NAME = 'road-helper'
         WAR_NAME = 'road-helper-0.0.1-SNAPSHOT.war'
     }
@@ -55,7 +52,7 @@ pipeline {
             post {
                 always {
                     junit testResults: '**/surefire-reports/*Selenium*.xml', allowEmptyResults: true
-                    archiveArtifacts artifacts: 'target/screenshots/*.png', allowEmptyResults: true
+                    archiveArtifacts artifacts: 'target/screenshots/*.png', allowEmptyArchive: true
                 }
                 failure {
                     echo 'Selenium regression tests failed! Halting pipeline deployment.'
