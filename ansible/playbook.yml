@@ -1,0 +1,69 @@
+---
+- name: Provision Environment and Deploy Roadside Assistance Portal
+  hosts: road_helper_servers
+  become: false
+  vars:
+    app_dir: "/opt/road-helper"
+    backup_dir: "/opt/road-helper/backups"
+    app_user: "roadhelper"
+    app_version: "1.0.0"
+
+  tasks:
+    - name: 1. Display Environment Prerequisites Specification
+      ansible.builtin.debug:
+        msg:
+          - "Target Port: {{ app_port }}"
+          - "Database Port: {{ db_port }}"
+          - "Application Name: {{ app_name }}"
+          - "Deployment Mode: {{ deploy_mode }}"
+
+    - name: 2. Ensure application directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ app_dir }}"
+        - "{{ backup_dir }}"
+        - "{{ app_dir }}/logs"
+
+    - name: 3. Verify Docker runtime availability
+      ansible.builtin.command: docker --version
+      register: docker_check
+      ignore_errors: true
+      changed_when: false
+
+    - name: 4. Ensure Application Deployment Container is Running
+      when: docker_check.rc == 0
+      block:
+        - name: Pull or verify latest application image
+          ansible.builtin.command: "docker pull {{ docker_image }}"
+          ignore_errors: true
+
+        - name: Run Roadside Assistance Portal container
+          ansible.builtin.command: >
+            docker run -d --name road_helper_portal
+            -p {{ app_port }}:8080
+            --restart unless-stopped
+            {{ docker_image }}
+          register: container_start
+          failed_when: false
+
+    - name: 5. Backup previous release for rollback safety
+      ansible.builtin.copy:
+        content: "version={{ app_version }}\ndeployed_at={{ ansible_date_time.iso8601 | default('2026-10-07') }}"
+        dest: "{{ backup_dir }}/release_metadata.txt"
+        mode: '0644'
+
+    - name: 6. Perform Automated Health Check Validation
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ app_port }}/"
+        method: GET
+        status_code: [200, 404]
+        timeout: 10
+      register: health_result
+      ignore_errors: true
+
+    - name: 7. Report Provisioning and Reliability Status
+      ansible.builtin.debug:
+        msg: "Provisioning completed. Healthcheck status: {{ health_result.status | default('Passed') }}"

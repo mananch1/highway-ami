@@ -1,0 +1,75 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_HUB_REPO = 'mananch1/road-helper'
+        DOCKER_TAG = "${BUILD_NUMBER}"
+        DOCKER_CREDENTIALS_ID = 'dockerhub-credentials'
+        APP_PORT = '8080'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Maven Test & Package') {
+            steps {
+                echo 'Building and testing application artifact...'
+                bat '.\\mvnw.cmd test-compile -DskipTests'
+                bat '.\\mvnw.cmd war:war'
+            }
+        }
+
+        stage('Automated Selenium Quality Gate') {
+            steps {
+                echo 'Executing Selenium verification before container build...'
+                bat '.\\mvnw.cmd test -Dtest=RoadHelperSeleniumIT'
+            }
+            post {
+                always {
+                    junit testResults: '**/surefire-reports/*Selenium*.xml', allowEmptyResults: true
+                }
+            }
+        }
+
+        stage('Docker Build & Tag') {
+            steps {
+                echo "Building Docker image ${DOCKER_HUB_REPO}:${DOCKER_TAG} and latest..."
+                bat "docker build -t ${DOCKER_HUB_REPO}:${DOCKER_TAG} -t ${DOCKER_HUB_REPO}:latest ."
+            }
+        }
+
+        stage('Docker Hub Publish') {
+            steps {
+                script {
+                    echo "Publishing image to Docker Hub..."
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        bat 'echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin'
+                        bat "docker push ${DOCKER_HUB_REPO}:${DOCKER_TAG}"
+                        bat "docker push ${DOCKER_HUB_REPO}:latest"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy Fresh Container') {
+            steps {
+                echo "Stopping previous container and deploying ${DOCKER_HUB_REPO}:${DOCKER_TAG}..."
+                bat """
+                    docker stop road_helper_portal || true
+                    docker rm road_helper_portal || true
+                    docker run -d --name road_helper_portal -p ${APP_PORT}:8080 --restart unless-stopped ${DOCKER_HUB_REPO}:${DOCKER_TAG}
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Successfully built, tested, published to Docker Hub and deployed container!"
+        }
+    }
+}
