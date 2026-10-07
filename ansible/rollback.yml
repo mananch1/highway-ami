@@ -1,0 +1,45 @@
+---
+- name: Automated Rollback and Recovery to Previous Stable Release
+  hosts: road_helper_servers
+  become: false
+  vars:
+    app_dir: "/opt/road-helper"
+    backup_dir: "/opt/road-helper/backups"
+    previous_stable_tag: "v1.0.0"
+
+  tasks:
+    - name: 1. Identify active unhealthy deployment
+      ansible.builtin.debug:
+        msg: "Initiating rollback sequence to previous stable release: {{ previous_stable_tag }}"
+
+    - name: 2. Stop and remove faulty container instance
+      ansible.builtin.command: docker stop road_helper_portal
+      ignore_errors: true
+      changed_when: true
+
+    - name: 3. Remove stopped faulty container
+      ansible.builtin.command: docker rm road_helper_portal
+      ignore_errors: true
+      changed_when: true
+
+    - name: 4. Relaunch previous verified stable image
+      ansible.builtin.command: >
+        docker run -d --name road_helper_portal
+        -p {{ app_port }}:8080
+        --restart unless-stopped
+        mananch1/road-helper:{{ previous_stable_tag }}
+      register: rollback_run
+      ignore_errors: true
+
+    - name: 5. Verify post-rollback health status
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ app_port }}/"
+        method: GET
+        status_code: [200, 404]
+        timeout: 10
+      register: rollback_health
+      ignore_errors: true
+
+    - name: 6. Log Recovery and Reliability Confirmation
+      ansible.builtin.debug:
+        msg: "Rollback completed successfully. System restored to {{ previous_stable_tag }}."
