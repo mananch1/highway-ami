@@ -36,4 +36,7 @@ build/
 ### VS Code ###
 .vscode/
 
-*.mvn
+*.xlsx
+frontend/node_modules/
+frontend/dist/
+target/screenshots/
