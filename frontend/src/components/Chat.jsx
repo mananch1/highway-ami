@@ -4,7 +4,7 @@ import { Client } from '@stomp/stompjs';
 import { getChatMessages } from '../api/api';
 import { AuthContext } from '../context/AuthContext';
 
-const Chat = ({ incidentId, guestToken }) => {
+const Chat = ({ incidentId, guestToken, guestName }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const stompClientRef = useRef(null);
@@ -63,10 +63,11 @@ const Chat = ({ incidentId, guestToken }) => {
     e.preventDefault();
     if (!input.trim() || !stompClientRef.current?.active) return;
 
+    const currentSenderName = user?.name || guestName || 'Guest';
     const messageObj = {
       incidentId: incidentId,
-      content: input,
-      senderName: user ? user.name : 'Guest'
+      message: input,
+      senderName: currentSenderName
     };
 
     stompClientRef.current.publish({
@@ -77,13 +78,16 @@ const Chat = ({ incidentId, guestToken }) => {
     setInput('');
   };
 
+  const myName = (user?.name || guestName || 'Guest').trim().toLowerCase();
+
   return (
     <div className="card" style={{ display: 'flex', flexDirection: 'column', height: '400px', padding: '1rem' }}>
       <h3 style={{ marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>Chat</h3>
       
       <div style={{ flex: 1, overflowY: 'auto', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {messages.map((msg, index) => {
-          const isMe = user ? msg.senderId === user.userId : msg.senderName === 'Guest';
+          const msgSender = (msg.senderName || '').trim().toLowerCase();
+          const isMe = msgSender === myName;
           return (
             <div key={index} style={{
               alignSelf: isMe ? 'flex-end' : 'flex-start',
@@ -96,7 +100,7 @@ const Chat = ({ incidentId, guestToken }) => {
               <div style={{ fontSize: '0.75rem', marginBottom: '0.25rem', opacity: 0.8 }}>
                 {msg.senderName} • {new Date(msg.timestamp || Date.now()).toLocaleTimeString()}
               </div>
-              <div>{msg.content}</div>
+              <div>{msg.message || msg.content}</div>
             </div>
           );
         })}

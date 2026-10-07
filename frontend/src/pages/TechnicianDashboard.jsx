@@ -16,18 +16,22 @@ const TechnicianDashboard = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [incidentsData, usersData] = await Promise.all([
-        getIncidents(),
-        getUsers()
-      ]);
-      setIncidents(incidentsData);
-      
-      const me = usersData.find(u => u.id === user.userId);
-      if (me) {
-        setIsAvailable(me.available);
+      try {
+        const incidentsData = await getIncidents();
+        setIncidents(incidentsData || []);
+      } catch (e) {
+        console.error('Failed to load incidents', e);
       }
-    } catch (err) {
-      console.error('Failed to fetch dashboard data', err);
+
+      try {
+        const usersData = await getUsers();
+        const me = usersData?.find(u => u.id === user?.userId);
+        if (me) {
+          setIsAvailable(me.isAvailable !== undefined ? me.isAvailable : me.available);
+        }
+      } catch (e) {
+        console.error('Failed to load user availability', e);
+      }
     } finally {
       setLoading(false);
     }
@@ -36,7 +40,12 @@ const TechnicianDashboard = () => {
   const handleToggle = async () => {
     try {
       const res = await toggleAvailability(user.userId);
-      setIsAvailable(res.available);
+      const newAvail = res?.isAvailable !== undefined ? res.isAvailable : res?.available;
+      if (newAvail !== undefined) {
+        setIsAvailable(newAvail);
+      } else {
+        setIsAvailable(prev => !prev);
+      }
     } catch (err) {
       console.error('Failed to toggle availability', err);
     }

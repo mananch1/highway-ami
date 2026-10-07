@@ -78,7 +78,7 @@ const EmergencyStatus = () => {
         </div>
 
         <div>
-          <Chat incidentId={incident.id} guestToken={token} />
+          <Chat incidentId={incident.id} guestToken={token} guestName={incident.guestName} />
         </div>
       </div>
     </div>
