@@ -1,8 +1,16 @@
 package com.mananc.road_helper;
 
 
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+
+@Entity 
 public class Incident {
+    @Id 
     private Integer incidantId;
+    @ManyToOne 
     private Zone incidantZone;
     private String customer;
     private String employee;

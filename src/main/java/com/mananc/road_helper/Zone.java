@@ -1,6 +1,11 @@
 package com.mananc.road_helper;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+
+@Entity 
 public class Zone {
+    @Id 
     private String zoneId;
     private double x;
     private double y;
