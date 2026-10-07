@@ -1,5 +1,10 @@
 pipeline {
-    agent any
+    agent {
+        node {
+            label ''
+            customWorkspace 'D:/DOCS/Jenkins/workspace/road-helper-pipeline'
+        }
+    }
 
     parameters {
         choice(name: 'DEPLOY_ENV', choices: ['staging', 'production', 'dev'], description: 'Deployment Target Environment')
@@ -23,7 +28,7 @@ pipeline {
         stage('Build & Unit Tests') {
             steps {
                 echo 'Compiling backend code and running unit tests...'
-                bat '.\\mvnw.cmd test -Dtest=IncidentServiceTest,RoadHelperApplicationTests'
+                bat '.\\mvnw.cmd test -Dmaven.repo.local=D:/DOCS/.m2/repository -Dtest=IncidentServiceTest,RoadHelperApplicationTests'
             }
             post {
                 always {
@@ -35,7 +40,7 @@ pipeline {
         stage('Package Application') {
             steps {
                 echo "Packaging WAR file with React frontend bundled..."
-                bat '.\\mvnw.cmd war:war'
+                bat '.\\mvnw.cmd package -DskipTests -Dmaven.repo.local=D:/DOCS/.m2/repository'
             }
             post {
                 success {
@@ -47,7 +52,7 @@ pipeline {
         stage('Selenium E2E Tests') {
             steps {
                 echo 'Running headless Selenium WebDriver integration tests across 5 critical journeys...'
-                bat '.\\mvnw.cmd test -Dtest=RoadHelperSeleniumIT'
+                bat '.\\mvnw.cmd test -Dmaven.repo.local=D:/DOCS/.m2/repository -Dtest=RoadHelperSeleniumIT'
             }
             post {
                 always {
