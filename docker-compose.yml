@@ -1,22 +1,48 @@
 services:
   db:
-    container_name : postgres_road_assist
-    image : postgres:latest
+    container_name: postgres_road_assist
+    image: postgres:16-alpine
     environment:
-      POSTGRES_USER : mananc
-      POSTGRES_PASSWORD : 123456
+      POSTGRES_DB: roadhelper_db
+      POSTGRES_USER: mananc
+      POSTGRES_PASSWORD: password123
       PGDATA: /data/postgres
     volumes:
-      - db:/data/postgres
+      - postgres_data:/data/postgres
     ports:
       - "5432:5432"
     networks:
-      - db
+      - road_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mananc -d roadhelper_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    container_name: road_helper_portal
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mananch1/road-helper:latest
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/roadhelper_db
+      SPRING_DATASOURCE_USERNAME: mananc
+      SPRING_DATASOURCE_PASSWORD: password123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - road_network
     restart: unless-stopped
 
 networks:
-  db:
+  road_network:
     driver: bridge
 
 volumes:
-  db:
+  postgres_data:
