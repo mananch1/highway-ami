@@ -38,12 +38,14 @@
       block:
         - name: Check if Docker Compose configuration exists
           ansible.builtin.stat:
-            path: docker-compose.yml
+            path: "{{ playbook_dir }}/../docker-compose.yml"
           register: compose_file
 
         - name: Deploy full application and database stack via Docker Compose
           when: compose_file.stat.exists
           ansible.builtin.command: docker compose up -d
+          args:
+            chdir: "{{ playbook_dir }}/.."
           register: compose_run
           changed_when: "'Started' in compose_run.stdout or 'Created' in compose_run.stdout or 'Recreated' in compose_run.stdout"
 
