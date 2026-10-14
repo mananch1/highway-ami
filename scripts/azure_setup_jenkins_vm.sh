@@ -46,7 +46,8 @@ fi
 echo "==> [4/6] Installing Jenkins LTS..."
 if ! systemctl is-active --quiet jenkins; then
     mkdir -p /etc/apt/keyrings
-    curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | gpg --dearmor --yes -o /etc/apt/keyrings/jenkins.gpg
+    gpg --no-default-keyring --keyring /etc/apt/keyrings/jenkins.gpg --keyserver keyserver.ubuntu.com --recv-keys 7198F4B714ABFC68
+    chmod 644 /etc/apt/keyrings/jenkins.gpg
     echo "deb [signed-by=/etc/apt/keyrings/jenkins.gpg] https://pkg.jenkins.io/debian-stable binary/" | tee /etc/apt/sources.list.d/jenkins.list > /dev/null
     apt-get update -y
     apt-get install -y jenkins
