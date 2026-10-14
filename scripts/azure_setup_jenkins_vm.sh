@@ -46,7 +46,7 @@ fi
 echo "==> [4/6] Installing Jenkins LTS..."
 if ! systemctl is-active --quiet jenkins; then
     mkdir -p /etc/apt/keyrings
-    gpg --no-default-keyring --keyring /etc/apt/keyrings/jenkins.gpg --keyserver keyserver.ubuntu.com --recv-keys 7198F4B714ABFC68
+    curl -fsSL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x7198F4B714ABFC68" | gpg --dearmor --yes -o /etc/apt/keyrings/jenkins.gpg
     chmod 644 /etc/apt/keyrings/jenkins.gpg
     echo "deb [signed-by=/etc/apt/keyrings/jenkins.gpg] https://pkg.jenkins.io/debian-stable binary/" | tee /etc/apt/sources.list.d/jenkins.list > /dev/null
     apt-get update -y
@@ -74,7 +74,13 @@ echo "==> [6/6] Setup Complete!"
 echo "------------------------------------------------------------------------"
 echo "Jenkins URL: http://$(curl -s ifconfig.me):8080"
 echo "Initial Admin Password:"
-cat /var/lib/jenkins/secrets/initialAdminPassword
+for i in {1..30}; do
+    if [ -f /var/lib/jenkins/secrets/initialAdminPassword ]; then
+        cat /var/lib/jenkins/secrets/initialAdminPassword
+        break
+    fi
+    sleep 2
+done
 echo ""
 echo "------------------------------------------------------------------------"
 echo "IMPORTANT: Copy this Public Key to VM 2 (~/.ssh/authorized_keys):"
