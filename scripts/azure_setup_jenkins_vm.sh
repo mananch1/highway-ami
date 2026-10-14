@@ -19,6 +19,7 @@ fi
 
 echo "==> [2/6] Updating system repositories and installing dependencies..."
 export DEBIAN_FRONTEND=noninteractive
+rm -f /etc/apt/sources.list.d/jenkins.list
 apt-get update -y
 apt-get install -y \
     curl \
