@@ -6,6 +6,7 @@
     app_dir: "/opt/road-helper"
     backup_dir: "/opt/road-helper/backups"
     app_port: 8080
+    deploy_user: "{{ ansible_user | default('mananc') }}"
 
   tasks:
     - name: 1. Display Target Environment Specification
@@ -14,12 +15,13 @@
           - "Deploying to Azure Production Host: {{ inventory_hostname }}"
           - "Application Directory: {{ app_dir }}"
           - "Target Port: {{ app_port }}"
+          - "Deploy User: {{ deploy_user }}"
 
     - name: 2. Ensure application directories exist on production VM
       ansible.builtin.file:
         path: "{{ item }}"
         state: directory
-        owner: azureuser
+        owner: "{{ deploy_user }}"
         group: docker
         mode: '0755'
       loop:
@@ -36,7 +38,7 @@
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/../docker-compose.azure.yml"
         dest: "{{ app_dir }}/docker-compose.yml"
-        owner: azureuser
+        owner: "{{ deploy_user }}"
         group: docker
         mode: '0644'
 
@@ -44,7 +46,7 @@
       ansible.builtin.copy:
         src: "{{ playbook_dir }}/../target/road-helper-0.0.1-SNAPSHOT.war"
         dest: "{{ app_dir }}/ROOT.war"
-        owner: azureuser
+        owner: "{{ deploy_user }}"
         group: docker
         mode: '0644'
       register: war_copy
@@ -67,7 +69,7 @@
       ansible.builtin.copy:
         content: "version={{ app_version | default('1.0.0') }}\n"
         dest: "{{ backup_dir }}/release_metadata.txt"
-        owner: azureuser
+        owner: "{{ deploy_user }}"
         group: docker
         mode: '0644'
 
