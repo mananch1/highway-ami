@@ -27,12 +27,16 @@ pipeline {
 
         stage('Build & Unit Tests') {
             steps {
-                echo 'Compiling backend code and running unit tests...'
-                bat '.\\mvnw.cmd test -Dmaven.repo.local=D:/DOCS/.m2/repository -Dtest=IncidentServiceTest,RoadHelperApplicationTests'
+                echo 'Cleaning stale test reports and running unit tests...'
+                bat '''
+                    if exist "target\\surefire-reports" rmdir /s /q "target\\surefire-reports"
+                    if exist "target\\screenshots" rmdir /s /q "target\\screenshots"
+                    .\\mvnw.cmd test -Dmaven.repo.local=D:/DOCS/.m2/repository -Dtest=IncidentServiceTest,RoadHelperApplicationTests
+                '''
             }
             post {
                 always {
-                    junit testResults: '**/surefire-reports/*.xml', allowEmptyResults: true
+                    junit testResults: '**/surefire-reports/TEST-*RoadHelperApplicationTests.xml,**/surefire-reports/TEST-*IncidentServiceTest.xml', allowEmptyResults: true
                 }
             }
         }
@@ -56,7 +60,7 @@ pipeline {
             }
             post {
                 always {
-                    junit testResults: '**/surefire-reports/*Selenium*.xml', allowEmptyResults: true
+                    junit testResults: '**/surefire-reports/TEST-*RoadHelperSeleniumIT.xml', allowEmptyResults: true
                     archiveArtifacts artifacts: 'target/screenshots/*.png', allowEmptyArchive: true
                 }
                 failure {
