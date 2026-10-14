@@ -47,8 +47,9 @@ flowchart TD
 - **Frontend:** React 18, Vite, React Router 6, Axios, Recharts, SockJS-Client, StompJs
 - **Database:** PostgreSQL (Production / Docker), H2 In-Memory (Automated CI Testing)
 - **Testing:** JUnit 5, Mockito, Selenium WebDriver 4.x (Headless Chrome/Edge with failure screenshots)
-- **CI/CD:** Jenkins Declarative Pipeline (`Jenkinsfile`), Docker, Docker Hub (`mananch1/road-helper`)
-- **Configuration Management:** Ansible (`inventory.ini`, `playbook.yml`, `rollback.yml`)
+- **CI/CD:** Jenkins Declarative Pipeline (`Jenkinsfile`, `Jenkinsfile.azure`), Docker, Docker Hub (`mananch1/road-helper`)
+- **Configuration Management:** Ansible (`inventory.ini`, `playbook.yml`, `inventory_azure.ini`, `playbook_azure.yml`)
+- **Cloud Infrastructure:** Microsoft Azure (Jenkins Controller VM & Production Host at `20.198.80.74`)
 
 ---
 
