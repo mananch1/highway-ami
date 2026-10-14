@@ -36,8 +36,14 @@
     - name: 4. Ensure Application Deployment Container is Running
       when: docker_check.rc == 0
       block:
+        - name: Check if application container is already running
+          ansible.builtin.command: docker ps -q -f name=^road_helper_portal$
+          register: container_running
+          changed_when: false
+
         - name: Pull or verify latest application image
           ansible.builtin.command: "docker pull {{ docker_image }}"
+          when: container_running.stdout == ""
           ignore_errors: true
 
         - name: Run Roadside Assistance Portal container
@@ -46,12 +52,11 @@
             -p {{ app_port }}:8080
             --restart unless-stopped
             {{ docker_image }}
-          register: container_start
-          failed_when: false
+          when: container_running.stdout == ""
 
     - name: 5. Backup previous release for rollback safety
       ansible.builtin.copy:
-        content: "version={{ app_version }}\ndeployed_at={{ ansible_date_time.iso8601 | default('2026-10-07') }}"
+        content: "version={{ app_version }}\n"
         dest: "{{ backup_dir }}/release_metadata.txt"
         mode: '0644'
 
