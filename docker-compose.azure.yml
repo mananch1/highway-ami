@@ -1,0 +1,50 @@
+services:
+  db:
+    container_name: postgres_road_assist
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: roadhelper_db
+      POSTGRES_USER: mananc
+      POSTGRES_PASSWORD: password123
+      PGDATA: /data/postgres
+    volumes:
+      - postgres_data:/data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - road_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mananc -d roadhelper_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    container_name: road_helper_portal
+    image: tomcat:10.1-jdk21-temurin-jammy
+    ports:
+      - "80:8080"
+      - "8080:8080"
+    volumes:
+      - ./ROOT.war:/usr/local/tomcat/webapps/ROOT.war
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/roadhelper_db
+      SPRING_DATASOURCE_USERNAME: mananc
+      SPRING_DATASOURCE_PASSWORD: password123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_PROFILES_ACTIVE: prod
+      CATALINA_OPTS: "-Xms256m -Xmx512m"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - road_network
+    restart: unless-stopped
+
+networks:
+  road_network:
+    driver: bridge
+
+volumes:
+  postgres_data:

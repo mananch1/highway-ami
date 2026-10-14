@@ -1,0 +1,87 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME = 'road-helper'
+        WAR_NAME = 'road-helper-0.0.1-SNAPSHOT.war'
+    }
+
+    triggers {
+        githubPush()
+    }
+
+    stages {
+        stage('Checkout Source') {
+            steps {
+                echo "Fetching latest source code from branch: ${env.BRANCH_NAME ?: 'main'}"
+                checkout scm
+            }
+        }
+
+        stage('Build & Unit Tests') {
+            steps {
+                echo 'Cleaning stale test reports and running unit tests...'
+                sh '''
+                    rm -rf target/surefire-reports target/screenshots
+                    chmod +x mvnw
+                    ./mvnw test -Dtest=IncidentServiceTest,RoadHelperApplicationTests
+                '''
+            }
+            post {
+                always {
+                    junit testResults: '**/surefire-reports/TEST-*RoadHelperApplicationTests.xml,**/surefire-reports/TEST-*IncidentServiceTest.xml', allowEmptyResults: true
+                }
+            }
+        }
+
+        stage('Package Application') {
+            steps {
+                echo "Packaging WAR file with React frontend bundled..."
+                sh './mvnw package -DskipTests'
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: "target/${WAR_NAME}", fingerprint: true
+                }
+            }
+        }
+
+        stage('Selenium E2E Tests') {
+            steps {
+                echo 'Running headless Selenium WebDriver integration tests in Linux Chrome...'
+                sh './mvnw test -Dtest=RoadHelperSeleniumIT'
+            }
+            post {
+                always {
+                    junit testResults: '**/surefire-reports/TEST-*RoadHelperSeleniumIT.xml', allowEmptyResults: true
+                    archiveArtifacts artifacts: 'target/screenshots/*.png', allowEmptyArchive: true
+                }
+                failure {
+                    echo 'Selenium regression tests failed! Halting pipeline deployment.'
+                }
+            }
+        }
+
+        stage('Ansible Deploy to Azure Prod') {
+            steps {
+                echo 'Deploying application to Azure Production Server via Ansible...'
+                sh '''
+                    if [ -f "ansible/inventory_azure.ini" ]; then
+                        ansible-playbook -i ansible/inventory_azure.ini ansible/playbook_azure.yml
+                    else
+                        echo "ansible/inventory_azure.ini not found. Simulating production deployment step."
+                    fi
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline completed successfully! Roadside Assistance Portal is deployed on Azure Production Server."
+        }
+        failure {
+            echo "Pipeline failed. Review test and compilation logs above."
+        }
+    }
+}

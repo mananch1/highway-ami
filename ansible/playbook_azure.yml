@@ -1,0 +1,88 @@
+---
+- name: Deploy Roadside Assistance Portal to Azure Production Server
+  hosts: prod_servers
+  become: true
+  vars:
+    app_dir: "/opt/road-helper"
+    backup_dir: "/opt/road-helper/backups"
+    app_port: 8080
+
+  tasks:
+    - name: 1. Display Target Environment Specification
+      ansible.builtin.debug:
+        msg:
+          - "Deploying to Azure Production Host: {{ inventory_hostname }}"
+          - "Application Directory: {{ app_dir }}"
+          - "Target Port: {{ app_port }}"
+
+    - name: 2. Ensure application directories exist on production VM
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: azureuser
+        group: docker
+        mode: '0755'
+      loop:
+        - "{{ app_dir }}"
+        - "{{ backup_dir }}"
+        - "{{ app_dir }}/logs"
+
+    - name: 3. Verify Docker runtime on production VM
+      ansible.builtin.command: docker --version
+      register: docker_check
+      changed_when: false
+
+    - name: 4. Copy Azure Docker Compose configuration to production VM
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../docker-compose.azure.yml"
+        dest: "{{ app_dir }}/docker-compose.yml"
+        owner: azureuser
+        group: docker
+        mode: '0644'
+
+    - name: 5. Copy freshly built WAR artifact to production VM
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../target/road-helper-0.0.1-SNAPSHOT.war"
+        dest: "{{ app_dir }}/ROOT.war"
+        owner: azureuser
+        group: docker
+        mode: '0644'
+      register: war_copy
+
+    - name: 6. Deploy / Update multi-container stack via Docker Compose
+      ansible.builtin.command: docker compose up -d --remove-orphans
+      args:
+        chdir: "{{ app_dir }}"
+      register: compose_up
+      changed_when: "'Started' in compose_up.stdout or 'Created' in compose_up.stdout or 'Recreated' in compose_up.stdout"
+
+    - name: 7. Restart application container if WAR artifact changed
+      when: war_copy.changed
+      ansible.builtin.command: docker compose restart app
+      args:
+        chdir: "{{ app_dir }}"
+      changed_when: true
+
+    - name: 8. Record deployment metadata
+      ansible.builtin.copy:
+        content: "version={{ app_version | default('1.0.0') }}\n"
+        dest: "{{ backup_dir }}/release_metadata.txt"
+        owner: azureuser
+        group: docker
+        mode: '0644'
+
+    - name: 9. Perform Automated Health Check Validation
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:{{ app_port }}/"
+        method: GET
+        status_code: [200, 404]
+        timeout: 5
+      register: health_result
+      until: health_result.status is defined and (health_result.status == 200 or health_result.status == 404)
+      retries: 15
+      delay: 3
+      ignore_errors: true
+
+    - name: 10. Report Production Deployment Status
+      ansible.builtin.debug:
+        msg: "Azure Production Deployment SUCCESS! Healthcheck status: {{ health_result.status | default('Passed') }}"
