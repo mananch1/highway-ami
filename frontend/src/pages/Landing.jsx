@@ -70,7 +70,7 @@ const Landing = () => {
             <label>Description (Optional)</label>
             <textarea name="description" value={formData.description} onChange={handleChange} rows="3" />
           </div>
-          <button type="button" className="danger" style={{ width: '100%', fontSize: '1.1rem', padding: '0.75rem' }} disabled={loading}>
+          <button type="submit" className="danger" style={{ width: '100%', fontSize: '1.1rem', padding: '0.75rem' }} disabled={loading}>
             {loading ? 'Submitting...' : 'Request Emergency Assistance'}
           </button>
         </form>
