@@ -33,26 +33,35 @@
       ignore_errors: true
       changed_when: false
 
-    - name: 4. Ensure Application Deployment Container is Running
+    - name: 4. Ensure Application and Database Stack is Running
       when: docker_check.rc == 0
       block:
-        - name: Check if application container is already running
-          ansible.builtin.command: docker ps -q -f name=^road_helper_portal$
-          register: container_running
-          changed_when: false
+        - name: Check if Docker Compose configuration exists
+          ansible.builtin.stat:
+            path: docker-compose.yml
+          register: compose_file
 
-        - name: Pull or verify latest application image
-          ansible.builtin.command: "docker pull {{ docker_image }}"
-          when: container_running.stdout == ""
-          ignore_errors: true
+        - name: Deploy full application and database stack via Docker Compose
+          when: compose_file.stat.exists
+          ansible.builtin.command: docker compose up -d
+          register: compose_run
+          changed_when: "'Started' in compose_run.stdout or 'Created' in compose_run.stdout or 'Recreated' in compose_run.stdout"
 
-        - name: Run Roadside Assistance Portal container
-          ansible.builtin.command: >
-            docker run -d --name road_helper_portal
-            -p {{ app_port }}:8080
-            --restart unless-stopped
-            {{ docker_image }}
-          when: container_running.stdout == ""
+        - name: Standalone container fallback (when no compose file present)
+          when: not compose_file.stat.exists
+          block:
+            - name: Check if application container is already running
+              ansible.builtin.command: docker ps -q -f name=^road_helper_portal$
+              register: container_running
+              changed_when: false
+
+            - name: Run Roadside Assistance Portal container
+              ansible.builtin.command: >
+                docker run -d --name road_helper_portal
+                -p {{ app_port }}:8080
+                --restart unless-stopped
+                {{ docker_image }}
+              when: container_running.stdout == ""
 
     - name: 5. Backup previous release for rollback safety
       ansible.builtin.copy:
