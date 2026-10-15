@@ -67,8 +67,6 @@ chmod 700 /var/lib/jenkins/.ssh
 chmod 600 /var/lib/jenkins/.ssh/id_rsa
 chmod 644 /var/lib/jenkins/.ssh/id_rsa.pub
 
-# Allow jenkins user to run sudo commands without password if needed
-echo "jenkins ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/jenkins
 
 echo "==> [6/6] Setup Complete!"
 echo "------------------------------------------------------------------------"
