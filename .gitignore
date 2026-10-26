@@ -42,3 +42,9 @@ frontend/dist/
 target/screenshots/
 
 *DevOps_Technical_White_Paper_Manan_Chahal*
+
+# Environment & Cloud Credentials (Zero IP / Secret Leakage)
+.env
+*.env
+ansible/inventory_aws.ini
+*.pem

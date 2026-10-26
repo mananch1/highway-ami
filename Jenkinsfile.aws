@@ -1,0 +1,100 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_NAME = 'road-helper'
+        WAR_NAME = 'road-helper-0.0.1-SNAPSHOT.war'
+        MAVEN_OPTS = '-Xmx512m -XX:+UseG1GC'
+    }
+
+    stages {
+        stage('Checkout Source') {
+            steps {
+                echo "Fetching latest source code from branch: ${env.BRANCH_NAME ?: 'main'}"
+                checkout scm
+            }
+        }
+
+        stage('Build & Unit Tests') {
+            steps {
+                echo 'Cleaning stale test reports and running unit tests...'
+                sh '''
+                    rm -rf target/surefire-reports target/screenshots
+                    chmod +x mvnw
+                    ./mvnw test -Dtest=IncidentServiceTest,RoadHelperApplicationTests
+                '''
+            }
+            post {
+                always {
+                    junit testResults: '**/surefire-reports/TEST-*RoadHelperApplicationTests.xml,**/surefire-reports/TEST-*IncidentServiceTest.xml', allowEmptyResults: true
+                }
+            }
+        }
+
+        stage('Package Application') {
+            steps {
+                echo "Packaging WAR file with React frontend bundled..."
+                sh './mvnw package -DskipTests'
+            }
+            post {
+                success {
+                    archiveArtifacts artifacts: "target/${WAR_NAME}", fingerprint: true
+                }
+            }
+        }
+
+        stage('Selenium E2E Tests') {
+            steps {
+                echo 'Running headless Selenium WebDriver integration tests in Linux Chrome...'
+                sh './mvnw test -Dtest=RoadHelperSeleniumIT'
+            }
+            post {
+                always {
+                    junit testResults: '**/surefire-reports/TEST-*RoadHelperSeleniumIT.xml', allowEmptyResults: true
+                    archiveArtifacts artifacts: 'target/screenshots/*.png', allowEmptyArchive: true
+                }
+                failure {
+                    echo 'Selenium regression tests failed! Halting pipeline deployment.'
+                }
+            }
+        }
+
+        stage('Ansible Deploy to AWS Prod') {
+            steps {
+                echo 'Deploying application to AWS Mumbai Production Host via Ansible...'
+                sh '''
+                    # Source environment variables if .env exists
+                    if [ -f "/var/lib/jenkins/.env" ]; then
+                        set -a
+                        . /var/lib/jenkins/.env
+                        set +a
+                    fi
+
+                    TARGET_IP="${PROD_SERVER_IP:-}"
+                    SSH_KEY="/var/lib/jenkins/.ssh/id_rsa"
+
+                    if [ -n "$TARGET_IP" ]; then
+                        echo "Target Production Host is configured. Launching Ansible playbook..."
+                        ansible-playbook -i "${TARGET_IP}," \
+                            -u ubuntu \
+                            --private-key "${SSH_KEY}" \
+                            --ssh-common-args="-o StrictHostKeyChecking=no" \
+                            ansible/playbook_aws.yml
+                    else
+                        echo "WARNING: PROD_SERVER_IP is not set in /var/lib/jenkins/.env."
+                        echo "Please define PROD_SERVER_IP=<EC2_PROD_PRIVATE_IP> in /var/lib/jenkins/.env to enable automated deployment."
+                    fi
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline completed successfully! Roadside Assistance Portal is verified and deployed on AWS."
+        }
+        failure {
+            echo "Pipeline failed. Review test and compilation logs above."
+        }
+    }
+}
