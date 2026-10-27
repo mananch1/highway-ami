@@ -1,15 +1,20 @@
-import React, { useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useContext, useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
 const Navbar = () => {
   const { isAuthenticated, user, logout } = useContext(AuthContext);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
+    setMobileMenuOpen(false);
     navigate('/');
   };
+
+  const closeMenu = () => setMobileMenuOpen(false);
 
   const getDashboardLink = () => {
     if (!user) return '/';
@@ -22,59 +27,77 @@ const Navbar = () => {
   };
 
   return (
-    <nav style={styles.nav}>
-      <div className="container" style={styles.container}>
-        <Link to="/" style={styles.brand}>Road Helper</Link>
-        
-        <div style={styles.links}>
+    <header className="navbar-header">
+      <div className="container navbar-container">
+        {/* Brand */}
+        <Link to="/" className="navbar-brand" onClick={closeMenu}>
+          <span className="brand-icon">🚗</span>
+          <span className="brand-name">Road Helper</span>
+          <span className="brand-tag">SOS</span>
+        </Link>
+
+        {/* Mobile Hamburger Toggle Button */}
+        <button
+          type="button"
+          className="mobile-toggle-btn"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle navigation menu"
+        >
+          {mobileMenuOpen ? '✕' : '☰'}
+        </button>
+
+        {/* Navigation Links */}
+        <nav className={`navbar-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+          <Link
+            to="/"
+            className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
+            onClick={closeMenu}
+          >
+            🚨 Emergency
+          </Link>
+
           {isAuthenticated ? (
             <>
-              <span style={styles.userInfo}>{user?.name} ({user?.role})</span>
-              <Link to={getDashboardLink()} style={styles.link}>Dashboard</Link>
-              <Link to="/search" style={styles.link}>Search</Link>
-              <button className="danger" onClick={handleLogout}>Logout</button>
+              <Link
+                to={getDashboardLink()}
+                className={`nav-link ${location.pathname === getDashboardLink() ? 'active' : ''}`}
+                onClick={closeMenu}
+              >
+                📊 Dashboard
+              </Link>
+              <Link
+                to="/search"
+                className={`nav-link ${location.pathname === '/search' ? 'active' : ''}`}
+                onClick={closeMenu}
+              >
+                🔍 Search
+              </Link>
+              <div className="user-badge">
+                <span className="user-name">{user?.name}</span>
+                <span className="user-role-pill">{user?.role}</span>
+              </div>
+              <button
+                type="button"
+                className="danger logout-btn"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
             </>
           ) : (
-            <>
-              <Link to="/login" style={styles.link}>Login</Link>
-              <Link to="/register" style={styles.link}>Register</Link>
-            </>
+            <div className="auth-buttons">
+              <Link to="/login" className="nav-link login-link" onClick={closeMenu}>
+                Login
+              </Link>
+              <Link to="/register" className="register-btn" onClick={closeMenu}>
+                Sign Up
+              </Link>
+            </div>
           )}
-        </div>
+        </nav>
       </div>
-    </nav>
+    </header>
   );
-};
-
-const styles = {
-  nav: {
-    backgroundColor: '#ffffff',
-    borderBottom: '1px solid var(--border)',
-    padding: '1rem 0'
-  },
-  container: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  },
-  brand: {
-    fontSize: '1.5rem',
-    fontWeight: 'bold',
-    color: 'var(--primary)'
-  },
-  links: {
-    display: 'flex',
-    gap: '1.5rem',
-    alignItems: 'center'
-  },
-  link: {
-    fontWeight: '500',
-    color: 'var(--text-main)'
-  },
-  userInfo: {
-    color: 'var(--text-muted)',
-    fontSize: '0.9rem'
-  }
 };
 
 export default Navbar;
