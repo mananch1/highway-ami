@@ -5,10 +5,10 @@ import StatusBadge from '../components/StatusBadge';
 import Chat from '../components/Chat';
 
 const STEPS = [
-  { key: 'REPORTED', label: 'Reported', desc: 'Request Received' },
-  { key: 'ASSIGNED', label: 'Dispatched', desc: 'Technician Assigned' },
-  { key: 'IN_PROGRESS', label: 'In Progress', desc: 'En Route / On-Site' },
-  { key: 'RESOLVED', label: 'Resolved', desc: 'Assistance Complete' }
+  { key: 'REPORTED', label: 'Logged', desc: 'Request Received' },
+  { key: 'ASSIGNED', label: 'Dispatched', desc: 'Unit Assigned' },
+  { key: 'IN_PROGRESS', label: 'En Route', desc: 'On-Site Response' },
+  { key: 'RESOLVED', label: 'Resolved', desc: 'Service Completed' }
 ];
 
 const getStepIndex = (status) => {
@@ -42,7 +42,7 @@ const EmergencyStatus = () => {
         const data = await getEmergencyStatus(token);
         setIncident(data);
       } catch (err) {
-        setError('Failed to fetch emergency status. Invalid or expired token.');
+        setError('Failed to fetch emergency status. Invalid or expired tracking token.');
       } finally {
         setLoading(false);
       }
@@ -50,29 +50,27 @@ const EmergencyStatus = () => {
 
     fetchStatus();
     
-    // Poll for status updates every 15 seconds for rapid updates
+    // Poll for status updates every 15 seconds
     const interval = setInterval(fetchStatus, 15000);
     return () => clearInterval(interval);
   }, [token]);
 
   if (loading && !incident) {
     return (
-      <div className="container status-page-wrapper" style={{ padding: '4rem 1rem', textAlign: 'center' }}>
-        <div className="loading-spinner">⏳</div>
-        <h2>Locating Emergency Dispatch...</h2>
-        <p style={{ color: 'var(--text-muted)' }}>Connecting to regional highway patrol dispatch...</p>
+      <div className="container status-page-container" style={{ padding: '4rem 1rem', textAlign: 'center' }}>
+        <h2>Connecting to Dispatch Center...</h2>
+        <p style={{ color: 'var(--text-muted)' }}>Retrieving live incident status and technician coordinates.</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="container status-page-wrapper" style={{ padding: '4rem 1rem', textAlign: 'center' }}>
-        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚠️</div>
+      <div className="container status-page-container" style={{ padding: '4rem 1rem', textAlign: 'center' }}>
         <h2 style={{ color: 'var(--danger)' }}>Tracking Error</h2>
         <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>{error}</p>
-        <Link to="/" className="primary" style={{ display: 'inline-block', padding: '0.75rem 1.5rem' }}>
-          Return to Emergency Request Form
+        <Link to="/" className="btn-primary" style={{ display: 'inline-block' }}>
+          Return to Dispatch Intake
         </Link>
       </div>
     );
@@ -83,106 +81,113 @@ const EmergencyStatus = () => {
   const currentStep = getStepIndex(incident.status);
 
   return (
-    <div className="container status-page-wrapper">
+    <div className="container status-page-container">
       {/* Header */}
-      <div className="status-header">
-        <div className="status-live-pill">
-          <span className="live-dot"></span> LIVE DISPATCH FEED
+      <div className="dispatch-status-header">
+        <div className="status-meta-row">
+          <span className="dispatch-badge">DISPATCH CONSOLE</span>
+          <span className="incident-ref-badge">TICKET #{incident.id}</span>
         </div>
-        <h1>Emergency Dispatch Tracker</h1>
-        <p className="subtitle">Reference Ticket: #{incident.id} • Live connection established</p>
+        <h1 className="status-page-title">Live Incident Tracking</h1>
+        <p className="status-page-subtitle">Real-time status feed and technician communication channel</p>
       </div>
 
-      {/* 5-Step Visual Dispatch Stepper */}
-      <div className="card stepper-card">
-        <div className="stepper-container">
+      {/* Progress Stepper Card */}
+      <div className="card stepper-panel">
+        <div className="stepper-track">
           {STEPS.map((step, idx) => {
             const isCompleted = currentStep > idx;
             const isCurrent = currentStep === idx;
             return (
               <div
                 key={step.key}
-                className={`stepper-step ${isCompleted ? 'completed' : ''} ${isCurrent ? 'active' : ''}`}
+                className={`stepper-node ${isCompleted ? 'node-completed' : ''} ${isCurrent ? 'node-active' : ''}`}
               >
-                <div className="step-circle">
-                  {isCompleted ? '✓' : idx + 1}
+                <div className="node-marker">
+                  {isCompleted ? (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                  ) : (
+                    idx + 1
+                  )}
                 </div>
-                <div className="step-content">
-                  <div className="step-label">{step.label}</div>
-                  <div className="step-desc">{step.desc}</div>
+                <div className="node-info">
+                  <span className="node-label">{step.label}</span>
+                  <span className="node-desc">{step.desc}</span>
                 </div>
-                {idx < STEPS.length - 1 && <div className="step-line"></div>}
+                {idx < STEPS.length - 1 && <div className="node-connector"></div>}
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Main Grid: Details + Chat */}
-      <div className="status-grid">
+      {/* Grid: Details + Chat */}
+      <div className="status-layout-grid">
         {/* Incident Summary Card */}
-        <div className="card incident-summary-card">
-          <div className="card-top-header">
+        <div className="card incident-card-panel">
+          <div className="panel-header-row">
             <div>
-              <h2>Assistance Details</h2>
-              <span className="timestamp">Active Incident</span>
+              <h2 className="panel-heading">Incident Overview</h2>
+              <span className="panel-subheading">Priority Dispatch Record</span>
             </div>
             <StatusBadge status={incident.status} />
           </div>
 
-          <div className="details-list">
-            <div className="detail-item">
-              <span className="detail-label">Issue Category</span>
-              <span className="detail-value highlight-value">
+          <div className="data-table-list">
+            <div className="data-row">
+              <span className="data-key">Service Category</span>
+              <span className="data-value highlight-text">
                 {incident.type?.replace('_', ' ')}
               </span>
             </div>
 
-            <div className="detail-item">
-              <span className="detail-label">Reported Location</span>
-              <span className="detail-value">📍 {incident.location}</span>
+            <div className="data-row">
+              <span className="data-key">Reported Location</span>
+              <span className="data-value">{incident.location}</span>
             </div>
 
-            <div className="detail-item">
-              <span className="detail-label">Caller Name</span>
-              <span className="detail-value">{incident.guestName || 'Anonymous Guest'}</span>
+            <div className="data-row">
+              <span className="data-key">Caller Name</span>
+              <span className="data-value">{incident.guestName || 'Public Caller'}</span>
             </div>
 
-            <div className="detail-item">
-              <span className="detail-label">Assigned Technician</span>
-              <div className="technician-info-box">
+            <div className="data-row">
+              <span className="data-key">Assigned Unit</span>
+              <div className="unit-assignment-box">
                 {incident.technicianName ? (
                   <>
-                    <span className="tech-name">🛠️ {incident.technicianName}</span>
+                    <span className="unit-name">Unit: {incident.technicianName}</span>
                     <a
                       href="tel:+919876543210"
-                      className="call-tech-btn"
-                      title="Direct telephone connection to technician"
+                      className="btn-call-unit"
+                      title="Direct telephone line"
                     >
-                      📞 Call Technician
+                      Telephone Contact
                     </a>
                   </>
                 ) : (
-                  <span className="tech-searching">🔍 Dispatching nearest responder...</span>
+                  <span className="unit-pending">Routing to nearest available unit...</span>
                 )}
               </div>
             </div>
 
             {incident.description && (
-              <div className="detail-item">
-                <span className="detail-label">Landmark / Notes</span>
-                <span className="detail-value notes-text">{incident.description}</span>
+              <div className="data-row">
+                <span className="data-key">Report Notes</span>
+                <span className="data-value notes-block">{incident.description}</span>
               </div>
             )}
           </div>
 
-          <div className="emergency-tip-box">
-            <strong>💡 Safety Protocol:</strong> Stay inside your vehicle with hazard lights on and seatbelt fastened while parked on the shoulder. Use the chat window to share additional landmarks with your responder.
+          <div className="protocol-notice-box">
+            <strong>Safety Advisory:</strong> Remain inside your vehicle with hazard lights activated. Use the dispatch terminal below to communicate landmarks directly with your assigned unit.
           </div>
         </div>
 
         {/* Real-time WebSocket Chat */}
-        <div className="chat-card-container">
+        <div className="chat-panel-wrapper">
           <Chat incidentId={incident.id} guestToken={token} guestName={incident.guestName} />
         </div>
       </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { createEmergency } from '../api/api';
 import QrPlacardModal from '../components/QrPlacardModal';
 
@@ -45,10 +45,9 @@ const Landing = () => {
     setError('');
     try {
       const res = await createEmergency(formData);
-      // res contains guestToken
       navigate(`/emergency/status?token=${res.guestToken}`);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to submit emergency request.');
+      setError(err.response?.data?.message || 'Failed to submit emergency dispatch request.');
     } finally {
       setLoading(false);
     }
@@ -65,60 +64,69 @@ const Landing = () => {
   };
 
   return (
-    <div className="container">
-      {/* Hero Header */}
-      <div className="hero-section">
-        <span className="hero-pill">🚨 24/7 Rapid Emergency Response</span>
-        <h1 className="hero-title">Roadside Assistance Portal</h1>
-        <p className="hero-subtitle">Fast, reliable breakdown recovery and technician dispatch when you need it most.</p>
+    <div className="container main-container">
+      {/* Formal Header Section */}
+      <section className="portal-header-section">
+        <div className="section-eyebrow">HIGHWAY EMERGENCY DISPATCH SYSTEM</div>
+        <h1 className="portal-title">Roadside Assistance Portal</h1>
+        <p className="portal-subtitle">
+          Rapid breakdown response and certified emergency assistance dispatch across highway corridors.
+        </p>
 
-        {/* Action button to open QR Generator */}
-        <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+        <div className="header-actions">
           <button
             type="button"
-            className="secondary-btn"
+            className="btn-outline"
             onClick={() => setIsQrModalOpen(true)}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 1.25rem' }}
           >
-            🪧 <strong>Highway QR Placard Generator</strong>
+            Highway Mile Marker Placard Tool
           </button>
         </div>
-      </div>
+      </section>
 
-      {/* Emergency Request Form Card */}
-      <div className="emergency-card-wrapper">
-        <div className="card emergency-card">
-          <div className="emergency-card-header">
-            <span className="emergency-icon">⚠️</span>
-            <h2>Emergency Assistance Request</h2>
-            <p>Immediate 1-Click Dispatch — No Registration Required</p>
+      {/* Main Intake Card */}
+      <div className="form-card-wrapper">
+        <div className="card intake-card">
+          <div className="card-header-bar">
+            <div>
+              <h2 className="card-title">Dispatch Request Form</h2>
+              <p className="card-desc">Public Emergency Access &bull; Direct Queue Routing</p>
+            </div>
+            <span className="live-status-badge">
+              <span className="status-indicator-dot"></span> System Operational
+            </span>
           </div>
 
-          {/* QR Scan Banner Notification */}
+          {/* QR Detected Banner */}
           {qrDetected && (
-            <div className="qr-detected-banner">
-              <div className="qr-banner-icon">📍</div>
-              <div className="qr-banner-text">
-                <strong>Highway Placard Auto-Filled</strong>
-                <span>Location and incident type pre-populated from highway marker.</span>
+            <div className="alert-box alert-success">
+              <div className="alert-content">
+                <strong>Highway Marker Parameter Detected</strong>
+                <p>Location and service requirements have been pre-populated from the highway marker.</p>
               </div>
               <button
                 type="button"
-                className="qr-banner-clear"
+                className="alert-close-btn"
                 onClick={() => setQrDetected(false)}
-                title="Dismiss banner"
+                aria-label="Dismiss notice"
               >
-                ✕
+                Dismiss
               </button>
             </div>
           )}
 
-          {error && <div className="error-banner">{error}</div>}
+          {error && (
+            <div className="alert-box alert-danger">
+              <strong>Error:</strong> {error}
+            </div>
+          )}
 
-          <form onSubmit={handleSubmit} className="emergency-form">
-            <div className="form-row">
-              <div className="form-group flex-1">
-                <label htmlFor="input-name">Your Full Name <span className="req">*</span></label>
+          <form onSubmit={handleSubmit} className="intake-form">
+            <div className="form-grid-row">
+              <div className="form-field flex-1">
+                <label htmlFor="input-name">
+                  Full Name <span className="required-star">*</span>
+                </label>
                 <input
                   id="input-name"
                   type="text"
@@ -126,13 +134,15 @@ const Landing = () => {
                   required
                   value={formData.name}
                   onChange={handleChange}
-                  placeholder="e.g. John Doe"
+                  placeholder="Enter caller or driver name"
                   autoComplete="name"
                 />
               </div>
 
-              <div className="form-group flex-1">
-                <label htmlFor="input-phone">Phone Number <span className="req">*</span></label>
+              <div className="form-field flex-1">
+                <label htmlFor="input-phone">
+                  Contact Phone Number <span className="required-star">*</span>
+                </label>
                 <input
                   id="input-phone"
                   type="tel"
@@ -140,19 +150,19 @@ const Landing = () => {
                   required
                   value={formData.phone}
                   onChange={handleChange}
-                  placeholder="e.g. +91 98765 43210"
+                  placeholder="Mobile contact number"
                   autoComplete="tel"
                 />
               </div>
             </div>
 
-            <div className="form-group">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                <label htmlFor="input-location" style={{ margin: 0 }}>Breakdown Location <span className="req">*</span></label>
+            <div className="form-field">
+              <div className="field-label-group">
+                <label htmlFor="input-location">
+                  Breakdown Location <span className="required-star">*</span>
+                </label>
                 {formData.location && (
-                  <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: '600' }}>
-                    ✓ Location Captured
-                  </span>
+                  <span className="field-verified-text">Location set</span>
                 )}
               </div>
               <input
@@ -162,65 +172,66 @@ const Landing = () => {
                 required
                 value={formData.location}
                 onChange={handleChange}
-                placeholder="e.g. Mumbai-Pune Expressway, Km 42 or Western Express Hwy"
+                placeholder="Expressway corridor, mile marker, or nearest landmark"
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="select-type">Incident Type <span className="req">*</span></label>
+            <div className="form-field">
+              <label htmlFor="select-type">
+                Service Category <span className="required-star">*</span>
+              </label>
               <select id="select-type" name="type" value={formData.type} onChange={handleChange}>
-                <option value="FLAT_TIRE">🛞 Flat Tire Assistance</option>
-                <option value="ENGINE_FAILURE">🔧 Engine Breakdown / Towing</option>
-                <option value="ACCIDENT">🚑 Traffic Accident / Multi-Agency</option>
-                <option value="LOCKOUT">🔑 Vehicle Lockout Service</option>
-                <option value="FUEL_EMPTY">⛽ Emergency Fuel Delivery</option>
+                <option value="FLAT_TIRE">Flat Tire Replacement</option>
+                <option value="ENGINE_FAILURE">Mechanical Breakdown / Towing</option>
+                <option value="ACCIDENT">Collision / Traffic Incident</option>
+                <option value="LOCKOUT">Vehicle Lockout Assistance</option>
+                <option value="FUEL_EMPTY">Emergency Fuel Delivery</option>
               </select>
             </div>
 
-            <div className="form-group">
-              <label htmlFor="textarea-desc">Description & Landmark (Optional)</label>
+            <div className="form-field">
+              <label htmlFor="textarea-desc">
+                Incident Description & Additional Landmarks (Optional)
+              </label>
               <textarea
                 id="textarea-desc"
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
                 rows="3"
-                placeholder="e.g. White SUV parked on left shoulder with hazard lights on"
+                placeholder="Provide vehicle make/model, shoulder location, or hazard details"
               />
             </div>
 
-            <button
-              type="submit"
-              className="danger submit-btn"
-              disabled={loading}
-            >
-              {loading ? (
-                <span>⏳ Dispatching Rescue Team...</span>
-              ) : (
-                <span>🚀 Request Emergency Assistance Now</span>
-              )}
-            </button>
+            <div className="form-actions">
+              <button
+                type="submit"
+                className="btn-danger submit-dispatch-btn"
+                disabled={loading}
+              >
+                {loading ? 'Transmitting Dispatch...' : 'Dispatch Emergency Assistance Unit'}
+              </button>
+            </div>
           </form>
 
-          {/* Quick Info Badges */}
-          <div className="emergency-perks">
-            <div className="perk-item">
-              <span>⏱️</span>
-              <p>Average dispatch response &lt; 5 mins</p>
+          <div className="intake-footer-notes">
+            <div className="footer-note-item">
+              <strong>Priority Routing</strong>
+              <span>Immediate dispatch to designated highway patrol</span>
             </div>
-            <div className="perk-item">
-              <span>💬</span>
-              <p>Live driver-technician chat</p>
+            <div className="footer-note-item">
+              <strong>Direct Communication</strong>
+              <span>Encrypted live connection with dispatched unit</span>
             </div>
-            <div className="perk-item">
-              <span>🛡️</span>
-              <p>Verified certified highway patrol</p>
+            <div className="footer-note-item">
+              <strong>Coverage Guarantee</strong>
+              <span>Standard operating response under regional SLA</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Highway QR Placard Modal */}
+      {/* Highway Placard Modal */}
       <QrPlacardModal
         isOpen={isQrModalOpen}
         onClose={() => setIsQrModalOpen(false)}

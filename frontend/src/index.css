@@ -1,15 +1,23 @@
+@import './App.css';
+
 :root {
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --danger: #dc2626;
-  --danger-hover: #b91c1c;
-  --success: #16a34a;
-  --warning: #f59e0b;
+  --primary: #1d4ed8;
+  --primary-hover: #1e40af;
+  --danger: #b91c1c;
+  --danger-hover: #991b1b;
+  --success: #15803d;
+  --warning: #b45309;
+  
   --background: #f8fafc;
   --card-bg: #ffffff;
-  --text-main: #0f172a;
-  --text-muted: #64748b;
   --border: #e2e8f0;
+  --border-subtle: #f1f5f9;
+  
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --text-subtle: #64748b;
+  
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 * {
@@ -19,71 +27,138 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-family);
   background-color: var(--background);
   color: var(--text-main);
   line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
   text-decoration: none;
   color: var(--primary);
+  transition: color 0.15s ease;
 }
 
 a:hover {
   text-decoration: underline;
 }
 
-button {
-  cursor: pointer;
-  border: none;
-  border-radius: 4px;
-  padding: 0.5rem 1rem;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-button.primary {
-  background-color: var(--primary);
-  color: white;
-}
-button.primary:hover {
-  background-color: var(--primary-hover);
-}
-
-button.danger {
-  background-color: var(--danger);
-  color: white;
-}
-button.danger:hover {
-  background-color: var(--danger-hover);
-}
-
-button.success {
-  background-color: var(--success);
-  color: white;
-}
-
-input, select, textarea {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  margin-top: 0.25rem;
-  margin-bottom: 1rem;
+/* ==============================================================================
+   Button Components
+   ============================================================================== */
+button, .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  text-decoration: none;
+}
+
+button:focus-visible, .btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.btn-primary, button.primary {
+  background-color: var(--primary);
+  color: #ffffff;
+}
+.btn-primary:hover, button.primary:hover {
+  background-color: var(--primary-hover);
+  text-decoration: none;
+}
+
+.btn-danger, button.danger {
+  background-color: var(--danger);
+  color: #ffffff;
+  border-color: var(--danger);
+}
+.btn-danger:hover, button.danger:hover {
+  background-color: var(--danger-hover);
+  text-decoration: none;
+}
+
+.btn-secondary, button.secondary {
+  background-color: #ffffff;
+  color: var(--text-main);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover, button.secondary:hover {
+  background-color: #f1f5f9;
+  text-decoration: none;
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: var(--primary);
+  border: 1px solid #cbd5e1;
+}
+.btn-outline:hover {
+  background-color: #eff6ff;
+  border-color: var(--primary);
+  text-decoration: none;
+}
+
+.btn-sm {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+}
+
+button:disabled, .btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* ==============================================================================
+   Form Elements
+   ============================================================================== */
+input, select, textarea {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.875rem;
+  color: var(--text-main);
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  margin-top: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+}
+
+input::placeholder, textarea::placeholder {
+  color: #94a3b8;
+}
+
+/* ==============================================================================
+   Containers & Cards
+   ============================================================================== */
+.container {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
 }
 
 .card {
   background-color: var(--card-bg);
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
   border: 1px solid var(--border);
-}
-
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+  padding: 1.5rem;
 }

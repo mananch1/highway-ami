@@ -31,9 +31,11 @@ const Navbar = () => {
       <div className="container navbar-container">
         {/* Brand */}
         <Link to="/" className="navbar-brand" onClick={closeMenu}>
-          <span className="brand-icon">🚗</span>
-          <span className="brand-name">Road Helper</span>
-          <span className="brand-tag">SOS</span>
+          <div className="brand-mark">RH</div>
+          <div className="brand-text-group">
+            <span className="brand-name">RoadHelper</span>
+            <span className="brand-sub">DISPATCH PORTAL</span>
+          </div>
         </Link>
 
         {/* Mobile Hamburger Toggle Button */}
@@ -43,7 +45,7 @@ const Navbar = () => {
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           aria-label="Toggle navigation menu"
         >
-          {mobileMenuOpen ? '✕' : '☰'}
+          <span className="hamburger-icon"></span>
         </button>
 
         {/* Navigation Links */}
@@ -53,7 +55,7 @@ const Navbar = () => {
             className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
             onClick={closeMenu}
           >
-            🚨 Emergency
+            Emergency Intake
           </Link>
 
           {isAuthenticated ? (
@@ -63,34 +65,34 @@ const Navbar = () => {
                 className={`nav-link ${location.pathname === getDashboardLink() ? 'active' : ''}`}
                 onClick={closeMenu}
               >
-                📊 Dashboard
+                Console
               </Link>
               <Link
                 to="/search"
                 className={`nav-link ${location.pathname === '/search' ? 'active' : ''}`}
                 onClick={closeMenu}
               >
-                🔍 Search
+                Search Records
               </Link>
-              <div className="user-badge">
+              <div className="user-profile-badge">
                 <span className="user-name">{user?.name}</span>
-                <span className="user-role-pill">{user?.role}</span>
+                <span className="user-role-badge">{user?.role}</span>
               </div>
               <button
                 type="button"
-                className="danger logout-btn"
+                className="btn-secondary btn-sm"
                 onClick={handleLogout}
               >
-                Logout
+                Sign Out
               </button>
             </>
           ) : (
-            <div className="auth-buttons">
-              <Link to="/login" className="nav-link login-link" onClick={closeMenu}>
-                Login
+            <div className="auth-group">
+              <Link to="/login" className="nav-link login-nav-link" onClick={closeMenu}>
+                Operator Sign In
               </Link>
-              <Link to="/register" className="register-btn" onClick={closeMenu}>
-                Sign Up
+              <Link to="/register" className="btn-primary btn-sm" onClick={closeMenu}>
+                Create Account
               </Link>
             </div>
           )}
