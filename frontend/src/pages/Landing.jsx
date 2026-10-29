@@ -51,10 +51,7 @@ const Landing = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    // [DEMO REGRESSION BUG]: Simulates an unhandled dispatch queue failure caught by Selenium E2E
-    setError('CRITICAL: Dispatch Gateway Timeout - Highway Emergency Routing Service Offline');
-    setLoading(false);
-    return;
+    setError('');
     try {
       const res = await createEmergency(formData);
       navigate(`/emergency/status?token=${res.guestToken}`);
@@ -79,13 +76,10 @@ const Landing = () => {
     <div className="container main-container">
       {/* Formal Header Section */}
       <section className="portal-header-section">
-        <div className="alert-box alert-danger" style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
-          <strong>CRITICAL REGRESSION DETECTED:</strong> Emergency Dispatch API Cluster Offline
-        </div>
-        <div className="section-eyebrow">SYSTEM OFFLINE</div>
-        <h1 className="portal-title">Emergency Assistance Dispatch Offline</h1>
+        <div className="section-eyebrow">HIGHWAY EMERGENCY DISPATCH SYSTEM</div>
+        <h1 className="portal-title">Roadside Assistance Portal</h1>
         <p className="portal-subtitle">
-          Rapid breakdown response is currently interrupted due to a gateway timeout error.
+          Rapid breakdown response and certified emergency assistance dispatch across highway corridors.
         </p>
 
         <div className="header-actions">
