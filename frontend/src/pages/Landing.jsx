@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { createEmergency } from '../api/api';
+import { AuthContext } from '../context/AuthContext';
 import QrPlacardModal from '../components/QrPlacardModal';
 
 const Landing = () => {
+  const { user } = useContext(AuthContext);
   const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState({
     name: '',
@@ -17,6 +19,13 @@ const Landing = () => {
   const [qrDetected, setQrDetected] = useState(false);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const navigate = useNavigate();
+
+  // If authenticated technician visits home, redirect directly to technician console
+  useEffect(() => {
+    if (user?.role === 'TECHNICIAN') {
+      navigate('/technician');
+    }
+  }, [user, navigate]);
 
   // Auto-detect URL query parameters from highway QR code scan
   useEffect(() => {
@@ -42,7 +51,10 @@ const Landing = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
+    // [DEMO REGRESSION BUG]: Simulates an unhandled dispatch queue failure caught by Selenium E2E
+    setError('CRITICAL: Dispatch Gateway Timeout - Highway Emergency Routing Service Offline');
+    setLoading(false);
+    return;
     try {
       const res = await createEmergency(formData);
       navigate(`/emergency/status?token=${res.guestToken}`);
@@ -67,10 +79,13 @@ const Landing = () => {
     <div className="container main-container">
       {/* Formal Header Section */}
       <section className="portal-header-section">
-        <div className="section-eyebrow">HIGHWAY EMERGENCY DISPATCH SYSTEM</div>
-        <h1 className="portal-title">Roadside Assistance Portal</h1>
+        <div className="alert-box alert-danger" style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+          <strong>CRITICAL REGRESSION DETECTED:</strong> Emergency Dispatch API Cluster Offline
+        </div>
+        <div className="section-eyebrow">SYSTEM OFFLINE</div>
+        <h1 className="portal-title">Emergency Assistance Dispatch Offline</h1>
         <p className="portal-subtitle">
-          Rapid breakdown response and certified emergency assistance dispatch across highway corridors.
+          Rapid breakdown response is currently interrupted due to a gateway timeout error.
         </p>
 
         <div className="header-actions">

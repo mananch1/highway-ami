@@ -16,6 +16,8 @@ const Navbar = () => {
 
   const closeMenu = () => setMobileMenuOpen(false);
 
+  const homeLink = user?.role === 'TECHNICIAN' ? '/technician' : '/';
+
   const getDashboardLink = () => {
     if (!user) return '/';
     switch (user.role) {
@@ -30,7 +32,7 @@ const Navbar = () => {
     <header className="navbar-header">
       <div className="container navbar-container">
         {/* Brand */}
-        <Link to="/" className="navbar-brand" onClick={closeMenu}>
+        <Link to={homeLink} className="navbar-brand" onClick={closeMenu}>
           <div className="brand-mark">RH</div>
           <div className="brand-text-group">
             <span className="brand-name">RoadHelper</span>
@@ -51,11 +53,11 @@ const Navbar = () => {
         {/* Navigation Links */}
         <nav className={`navbar-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
           <Link
-            to="/"
-            className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
+            to={homeLink}
+            className={`nav-link ${location.pathname === homeLink ? 'active' : ''}`}
             onClick={closeMenu}
           >
-            Emergency Intake
+            {user?.role === 'TECHNICIAN' ? 'Technician Console' : 'Emergency Intake'}
           </Link>
 
           {isAuthenticated ? (
